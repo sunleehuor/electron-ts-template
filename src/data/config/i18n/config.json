@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "defaultLocale": "en",
+  "locales": [
+    {
+      "lang": "en",
+      "file": "en.ts"
+    },
+    {
+      "lang": "zh-hans",
+      "file": "zh.ts"
+    }
+  ],
+  "localePath": "src/data/locales"
+}

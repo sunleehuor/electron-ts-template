@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "CommonJS",
+    "outDir": "dist/electron",
+    "rootDir": "electron",
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "types": ["node", "electron"],
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["electron/**/*.ts"]
+}
