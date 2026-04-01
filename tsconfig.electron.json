@@ -3,13 +3,17 @@
     "target": "es2022",
     "module": "CommonJS",
     "outDir": "dist/electron",
-    "rootDir": "electron",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "skipLibCheck": true,
     "types": ["node", "electron"],
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@/*": ["./electron/src/*"],
+      "@shared/*": ["./shared/*"]
+    }
   },
-  "include": ["electron/**/*.ts"]
+  "include": ["electron/**/*", "shared/**/*", "tsup.config.ts"]
 }
