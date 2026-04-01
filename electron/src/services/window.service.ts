@@ -13,14 +13,22 @@ export async function getMachineIdentifier() {
   }
 }
 
-export function getAppName() {
-  const name = APP_NAME;
-  console.log('App name: ', name);
-  return name;
+export async function getAppName() {
+  try {
+    const name = APP_NAME;
+    console.log('App name: ', name);
+    return name;
+  } catch (e) {
+    throw e;
+  }
 }
 
-export function getAppVersion() {
-  const version = APP_VERSION;
-  console.log('App version: ', version);
-  return version;
+export async function getAppVersion() {
+  try {
+    const version = APP_VERSION;
+    console.log('App version: ', version);
+    return version;
+  } catch (e) {
+    throw e;
+  }
 }
