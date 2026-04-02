@@ -30,11 +30,14 @@
   },
   "build": {
     "appId": "react.electron",
-    "asar": true,
     "productName": "test",
+    "executableName": "myapp",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/**/*.node"
+    ],
     "files": [
       "dist/electron/**/*",
-      "dist/renderer/**/*",
       "package.json"
     ],
     "extraResources": [
@@ -44,7 +47,7 @@
       },
       {
         "from": "dist/renderer",
-        "to": "app.asar.unpacked"
+        "to": "renderer"
       }
     ],
     "win": {
@@ -52,15 +55,14 @@
       "icon": "public/logo.png"
     },
     "nsis": {
-      "oneClick": false,
-      "perMachine": true,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "allowElevation": true,
       "differentialPackage": false,
-      "runAfterFinish": true,
-      "artifactName": "${productName}v${version}.${ext}"
+      "runAfterFinish": true
     },
     "mac": {
       "target": "dmg",
@@ -80,6 +82,8 @@
     "canvas": "^3.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-log": "^5.4.3",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.8.3",
     "i18next": "^25.7.4",
     "lucide-react": "^0.562.0",

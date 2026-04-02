@@ -15,12 +15,19 @@ import {
   IPC_QUIT_AND_INSTALL,
   IPC_SAVE_AS_IMAGE,
   IPC_SET_BADGE,
+  IPC_SLOT_ID,
+  IPC_STORAGE_CLEAR,
+  IPC_STORAGE_DELETE_KEY,
+  IPC_STORAGE_GET,
+  IPC_STORAGE_SET,
+  IPC_STORAGE_UPDATE,
   IPC_UPDATE_AVAILABLE,
   IPC_UPDATE_DOWNLOADED,
   IPC_UPDATE_ERROR,
   IPC_UPDATE_NOT_AVAILABLE,
   IPC_UPDATE_PROGRESS,
 } from '@shared/constant/ipc.constant';
+import { IStorage } from '@shared/types/storage';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // Badge
@@ -47,6 +54,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDeviceId: () => ipcRenderer.invoke(IPC_GET_DEVICE_ID),
   getAppName: () => ipcRenderer.invoke(IPC_GET_DEVICE_NAME),
   getAppVersion: () => ipcRenderer.invoke(IPC_GET_APP_VERSION),
+  storage: {
+    set: (data: Partial<IStorage>) => ipcRenderer.invoke(IPC_STORAGE_SET, data),
+    get: () => ipcRenderer.invoke(IPC_STORAGE_GET) as Partial<IStorage>,
+    update: (partial: Partial<IStorage>) => ipcRenderer.invoke(IPC_STORAGE_UPDATE, partial),
+    deleteKey: (key: string) => ipcRenderer.invoke(IPC_STORAGE_DELETE_KEY, key),
+    clear: () => ipcRenderer.invoke(IPC_STORAGE_CLEAR),
+  },
+  slot: {
+    getId: () => ipcRenderer.invoke(IPC_SLOT_ID),
+  },
 });
 
 // Auto Update

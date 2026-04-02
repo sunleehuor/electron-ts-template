@@ -1,7 +1,43 @@
-import { BrowserWindow } from 'electron';
-import path from 'path';
-import { IS_DEV } from '@/constant/app.constant';
+import { IS_DEV, MAX_INSTANCES } from '@/constant/app.constant';
 import { wait } from '@/utils/utils';
+import { app, BrowserWindow, dialog, safeStorage } from 'electron';
+import log from 'electron-log';
+import path from 'path';
+import { acquireSlot } from './slot.service';
+
+// mark app start time
+const startTime = Date.now();
+log.info(`[Startup] App process started: 0ms`);
+
+export function onCreateWindow(mainWindow: BrowserWindow, splashWindow: BrowserWindow) {
+  log.info(`[Startup] BrowserWindow created: ${Date.now() - startTime}ms`);
+
+  mainWindow.webContents.on('did-start-loading', () => {
+    log.info(`[Startup] did-start-loading: ${Date.now() - startTime}ms`);
+  });
+
+  mainWindow.webContents.on('did-start-navigation', () => {
+    log.info(`[Startup] did-start-navigation: ${Date.now() - startTime}ms`);
+  });
+
+  mainWindow.webContents.on('dom-ready', () => {
+    log.info(`[Startup] dom-ready: ${Date.now() - startTime}ms`);
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    log.info(`[Startup] did-finish-load: ${Date.now() - startTime}ms`);
+  });
+
+  mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
+    log.info(`[Startup] did-fail-load: ${code} ${desc}`);
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    log.info(`[Startup] ready-to-show: ${Date.now() - startTime}ms`);
+    splashWindow?.close?.();
+    mainWindow.show();
+  });
+}
 
 export function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -11,16 +47,17 @@ export function createWindow(): BrowserWindow {
       preload: path.join(__dirname, 'preload', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: IS_DEV,
     },
+    show: false,
   });
 
   if (IS_DEV) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(process.resourcesPath, 'app.asar.unpacked', 'index.html'));
+    mainWindow.loadFile(path.join(process.resourcesPath, 'renderer', 'index.html'));
   }
-
   return mainWindow;
 }
 
@@ -40,4 +77,36 @@ export function createSplashWindow(): BrowserWindow {
 
 export async function doAfterSplashScreen() {
   await wait(1000);
+}
+
+export async function getSlotId(): Promise<number | undefined> {
+  // warn if encryption unavailable (Linux without keyring)
+  if (process.platform === 'linux' && !safeStorage.isEncryptionAvailable()) {
+    const { response } = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Security Warning',
+      message: 'Secure storage unavailable.\n' + 'Install gnome-keyring for full security.',
+      buttons: ['Continue', 'Quit'],
+    });
+    if (response === 1) {
+      app.quit();
+      return undefined;
+    }
+  }
+
+  // acquire slot
+  const slotId = await acquireSlot();
+
+  if (!slotId) {
+    await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Max Instances Reached',
+      message: `Maximum ${MAX_INSTANCES} instance(s) allowed.`,
+      buttons: ['OK'],
+    });
+    app.quit();
+    return undefined;
+  }
+
+  return slotId;
 }

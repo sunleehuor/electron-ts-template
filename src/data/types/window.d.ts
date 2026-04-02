@@ -1,4 +1,5 @@
 import type { IDownload } from '@shared/types/download';
+import type { IStorage } from '@shared/types/storage';
 
 export {};
 
@@ -16,6 +17,8 @@ export interface IElectronAPI {
   getDeviceId: () => Promise<string>;
   getAppName: () => Promise<string>;
   getAppVersion: () => Promise<string>;
+  slot: ISlot;
+  storage: IStorageEvent;
 }
 
 export interface IElectronUpdate {
@@ -28,6 +31,18 @@ export interface IElectronUpdate {
   onProgress: (callback: (data: IPatchProgressing) => void) => void;
   onDownloaded: (callback: () => void) => void;
   onError: (callback: (data: any) => void) => void;
+}
+
+export interface IStorageEvent {
+  set: (data: IStorage) => Promise<void>;
+  get: () => Promise<Partial<IStorage>>;
+  update: (partial: Partial<IStorage>) => Promise<void>;
+  deleteKey: (key: string) => Promise<void>;
+  clear: () => Promise<void>;
+}
+
+export interface ISlot {
+  getId: () => Promise<number | null>;
 }
 
 declare global {
