@@ -4,3 +4,4 @@ export const IS_DEV = !app.isPackaged;
 export const APP_VERSION = app.getVersion();
 export const APP_NAME = app.getName();
 export const MAX_INSTANCES = 10;
+export const APP_CACHE_SIZE = 500 * 1024 * 1024; // 500MB

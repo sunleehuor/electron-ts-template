@@ -1,8 +1,8 @@
-import Store from 'electron-store';
-import { app } from 'electron';
+import { APP_CACHE_SIZE, MAX_INSTANCES } from '@/constant/app.constant';
 import { acquireLock, releaseLock } from '@/services/lock.service';
-import { MAX_INSTANCES } from '@/constant/app.constant';
+import { app, session } from 'electron';
 import log from 'electron-log';
+import Store from 'electron-store';
 
 interface SlotData {
   status: 'active' | 'inactive';
@@ -65,4 +65,16 @@ export function releaseSlot(slotId: number): void {
     pid: null,
   });
   log.info(`[Slot] Released slot: ${slotId}`);
+}
+
+export async function clearSlotCacheIfLarge(slotId: number): Promise<void> {
+  const s = session.fromPartition(`persist:slot-${slotId}`);
+  const cacheSize = await s.getCacheSize();
+
+  log.info(`[Cache] Slot ${slotId}: ${(cacheSize / 1024 / 1024).toFixed(2)}MB`);
+
+  if (cacheSize > APP_CACHE_SIZE) {
+    await s.clearCache(); // ← HTTP/GPU/Code cache only ✅
+    log.info(`[Cache] Cleared oversized cache slot: ${slotId}`);
+  }
 }

@@ -10,7 +10,7 @@ import {
 import { initService } from '@/services/service';
 import { app, BrowserWindow } from 'electron';
 import log from 'electron-log';
-import { releaseSlot } from './services/slot.service';
+import { clearSlotCacheIfLarge, releaseSlot } from './services/slot.service';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -25,8 +25,11 @@ async function bootstrap() {
   const slotId = await getSlotId();
   if (!slotId) return;
 
+  // Check and clear cache size
+  await clearSlotCacheIfLarge(slotId);
+
   // Create main screen window
-  mainWindow = createWindow();
+  mainWindow = createWindow(slotId);
 
   // Listen creating window event
   onCreateWindow(mainWindow, splash);
@@ -40,7 +43,7 @@ async function bootstrap() {
   mainWindow.on('close', () => releaseSlot(slotId));
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      createWindow(slotId);
     }
   });
 }

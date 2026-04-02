@@ -39,7 +39,7 @@ export function onCreateWindow(mainWindow: BrowserWindow, splashWindow: BrowserW
   });
 }
 
-export function createWindow(): BrowserWindow {
+export function createWindow(slotId: number): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -48,6 +48,7 @@ export function createWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: IS_DEV,
+      partition: `persist:slot-${slotId}`,
     },
     show: false,
   });
