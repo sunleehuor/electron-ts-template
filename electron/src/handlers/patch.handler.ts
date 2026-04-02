@@ -7,6 +7,7 @@ import {
   IPC_CONFIRM_DOWNLOAD,
   IPC_QUIT_AND_INSTALL,
   IPC_UPDATE_AVAILABLE,
+  IPC_UPDATE_DOWNLOADED,
   IPC_UPDATE_ERROR,
   IPC_UPDATE_NOT_AVAILABLE,
   IPC_UPDATE_PROGRESS,
@@ -60,16 +61,13 @@ export function initPatchHandler(mainWindow: BrowserWindow) {
 
   // When download finishes
   autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send(UPDATE_DOWNLOADED);
+    mainWindow.webContents.send(IPC_UPDATE_DOWNLOADED);
   });
 
   // IPC to install after user confirms
   ipcMain.on(IPC_QUIT_AND_INSTALL, async () => {
     try {
       console.log('[Updater] Preparing to install update...');
-
-      // Destroy main window
-      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy();
 
       // Small delay to ensure Windows releases locks
       await wait(1000);
