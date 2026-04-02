@@ -53,11 +53,44 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const api = window?.electronUpdater;
+    if (api) {
+      api.onProgress((e) => {
+        console.log(e);
+      });
+
+      api.onDownloaded(() => {
+        console.log('Downloaded');
+      });
+
+      api.onUpdateAvailable(() => {
+        console.log('Available to update');
+      });
+
+      api.onUpdateNotAvailable(() => {
+        console.log('Not available to update');
+      });
+    }
+  }, []);
+
   return (
     <>
       <img src={data} onClick={onCopy} />
+      <br />
       <span onClick={onClick}>Home Pagesssasdjgasdgashg</span>
+      <br />
       <button onClick={() => setTest()}>Set</button>
+      <br />
+      <button onClick={() => window.electronUpdater.checkForUpdate('http://localhost:9001/browser/maok/')}>
+        Check for update
+      </button>
+      <br />
+      <button onClick={() => window.electronUpdater.confirmDownload('http://localhost:9001/browser/maok/')}>
+        Update
+      </button>
+      <br />
+      <button onClick={() => window.electronUpdater.quitAndInstall()}>Quit and install</button>
     </>
   );
 }
