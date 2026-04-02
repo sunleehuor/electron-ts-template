@@ -2,7 +2,6 @@ import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import log from 'electron-log';
-import { wait } from '@/utils/utils';
 
 const LOCK_FILE = path.join(app.getPath('userData'), 'slots.lock');
 const TIMEOUT = 5000;
@@ -44,6 +43,10 @@ function isLockTooOld(): boolean {
   return Date.now() - data.timestamp > 10_000;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function cleanStaleLock(): void {
   if (!existsSync(LOCK_FILE)) return;
   if (isLockStale() || isLockTooOld()) {
@@ -75,7 +78,7 @@ export async function acquireLock(): Promise<void> {
       if (Date.now() - start > TIMEOUT) {
         throw new Error('[Lock] Timeout waiting for lock');
       }
-      await wait(INTERVAL);
+      await sleep(INTERVAL);
     }
   }
 }

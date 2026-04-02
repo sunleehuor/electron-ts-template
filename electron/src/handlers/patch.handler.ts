@@ -14,15 +14,19 @@ import {
 } from '@shared/constant/ipc.constant';
 
 export function initPatchHandler(mainWindow: BrowserWindow) {
+  // config
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = false;
+
   // IPC listener: React calls this to check for updates
-  ipcMain.on(IPC_CHECK_FOR_UPDATE, (_, url) => {
+  ipcMain.on(IPC_CHECK_FOR_UPDATE, async (_, url) => {
     try {
       autoUpdater.setFeedURL({
-        url: url + '/updates',
+        url: url,
         provider: 'generic',
       });
       autoUpdater.autoDownload = false;
-      autoUpdater.checkForUpdates();
+      await autoUpdater.checkForUpdates();
       console.log('Checking');
     } catch (e: any) {
       console.error('Checking error', e?.message);
@@ -46,8 +50,13 @@ export function initPatchHandler(mainWindow: BrowserWindow) {
   });
 
   // Confirm updates
-  ipcMain.on(IPC_CONFIRM_DOWNLOAD, () => {
-    autoUpdater.downloadUpdate();
+  ipcMain.on(IPC_CONFIRM_DOWNLOAD, async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+    } catch (e: any) {
+      console.error('Confirm update', e?.message);
+      mainWindow.webContents.send(IPC_UPDATE_ERROR, e?.message || '');
+    }
   });
 
   // Progress while downloading
