@@ -4,6 +4,7 @@ import { app, BrowserWindow, dialog, safeStorage } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import { acquireSlot } from './slot.service';
+import { copyRendererToUserData } from './platformUpdate.service';
 
 // mark app start time
 const startTime = Date.now();
@@ -57,7 +58,7 @@ export function createWindow(slotId: number): BrowserWindow {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(process.resourcesPath, 'renderer', 'index.html'));
+    mainWindow.loadFile(path.join(app.getPath('userData'), 'renderer', 'index.html'));
   }
   return mainWindow;
 }
@@ -77,7 +78,7 @@ export function createSplashWindow(): BrowserWindow {
 }
 
 export async function doAfterSplashScreen() {
-  await wait(1000);
+  await copyRendererToUserData();
 }
 
 export async function getSlotId(): Promise<number | undefined> {

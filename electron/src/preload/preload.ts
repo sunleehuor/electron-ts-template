@@ -12,6 +12,12 @@ import {
   IPC_ON_ATTACHMENT_COMPLETED,
   IPC_ON_ATTACHMENT_START_DOWNLOADING,
   IPC_ON_CANCEL_DOWNLOAD,
+  IPC_PLATFORM_CHECK_FOR_UPDATE,
+  IPC_PLATFORM_CONFIRM_DOWNLOAD,
+  IPC_PLATFORM_CONFIRM_UPDATE,
+  IPC_PLATFORM_SOURCE_DOWNLOAD,
+  IPC_PLATFORM_UPDATE_ERROR,
+  IPC_PLATFORM_UPDATE_ON_PROGRESS,
   IPC_QUIT_AND_INSTALL,
   IPC_SAVE_AS_IMAGE,
   IPC_SET_BADGE,
@@ -28,6 +34,7 @@ import {
   IPC_UPDATE_PROGRESS,
 } from '@shared/constant/ipc.constant';
 import { IStorage } from '@shared/types/storage';
+import { IPlatformUpdateProgress } from '@shared/types/platformUpdate';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // Badge
@@ -78,4 +85,17 @@ contextBridge.exposeInMainWorld('electronUpdater', {
     ipcRenderer.on(IPC_UPDATE_PROGRESS, (_event, data) => callback(data)),
   onDownloaded: (callback: () => void) => ipcRenderer.on(IPC_UPDATE_DOWNLOADED, callback),
   onError: (callback: (data: any) => void) => ipcRenderer.on(IPC_UPDATE_ERROR, (_event, data) => callback(data)),
+});
+
+// Platform Update
+contextBridge.exposeInMainWorld('electronPlatformUpdater', {
+  checkForUpdate: (url: string) => ipcRenderer.invoke(IPC_PLATFORM_CHECK_FOR_UPDATE, url),
+  confirmDownload: (url: string) => ipcRenderer.send(IPC_PLATFORM_CONFIRM_DOWNLOAD, url),
+  quitAndInstall: () => ipcRenderer.send(IPC_PLATFORM_CONFIRM_UPDATE),
+
+  onProgress: (callback: (data: IPlatformUpdateProgress) => void) =>
+    ipcRenderer.on(IPC_PLATFORM_UPDATE_ON_PROGRESS, (_event, data) => callback(data)),
+  onDownloaded: (callback: () => void) => ipcRenderer.on(IPC_PLATFORM_SOURCE_DOWNLOAD, callback),
+  onError: (callback: (data: any) => void) =>
+    ipcRenderer.on(IPC_PLATFORM_UPDATE_ERROR, (_event, data) => callback(data)),
 });

@@ -6,6 +6,7 @@ import { initPatchHandler } from '@/handlers/patch.handler';
 import { initWindowHandler } from '@/handlers/window.handler';
 import { initSlotHandler } from './slot.handler';
 import { initStorageHandler } from './storage.handler';
+import { initPlatformUpdateHandler } from './platformUpdate.handler';
 
 export function initHandler(win: BrowserWindow, pId: number) {
   // Handler
@@ -16,4 +17,5 @@ export function initHandler(win: BrowserWindow, pId: number) {
   initPatchHandler(win);
   initSlotHandler(pId);
   initStorageHandler(pId);
+  initPlatformUpdateHandler(win);
 }

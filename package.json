@@ -27,7 +27,8 @@
     "tr": "node scripts/translateRefactor.js",
     "window-package": "electron-builder --win",
     "mac-package": "electron-builder --mac",
-    "linux-package": "electron-builder --linux"
+    "linux-package": "electron-builder --linux",
+    "check:native": "node scripts/check-native.mjs"
   },
   "build": {
     "appId": "react.electron",
@@ -83,6 +84,8 @@
     "electron-log": "^5.4.3",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.3",
+    "extract-zip": "^2.0.1",
+    "fs-extra": "^11.3.4",
     "i18next": "^25.7.4",
     "lucide-react": "^0.562.0",
     "next-themes": "^0.4.6",

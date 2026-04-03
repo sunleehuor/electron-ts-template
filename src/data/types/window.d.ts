@@ -1,4 +1,5 @@
 import type { IDownload } from '@shared/types/download';
+import type { IPlatformCheckForUpdate } from '@shared/types/platformUpdate';
 import type { IStorage } from '@shared/types/storage';
 
 export {};
@@ -45,9 +46,20 @@ export interface ISlot {
   getId: () => Promise<number | null>;
 }
 
+export interface IElectronPlatformUpdater {
+  checkForUpdate: (url: string) => Promise<IPlatformCheckForUpdate | null>;
+  confirmDownload: (url: string) => Promise<vois>;
+  quitAndInstall: () => Promise<void>;
+
+  onProgress: (callback: (data: IPlatformUpdateProgress) => void) => void;
+  onDownloaded: (callback: () => void) => void;
+  onError: (callback: (data: any) => void) => void;
+}
+
 declare global {
   interface Window {
     electronAPI: IElectronAPI;
     electronUpdater: IElectronUpdate;
+    electronPlatformUpdater: IElectronPlatformUpdater;
   }
 }
