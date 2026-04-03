@@ -1,17 +1,19 @@
+import { IPC_PLATFORM_UPDATE_ERROR } from '@shared/constant/ipc.constant';
 import { app, BrowserWindow, dialog } from 'electron';
+import extract from 'extract-zip';
 import fs from 'fs-extra';
 import { dirname, join } from 'path';
-import extract from 'extract-zip';
-import { IPC_PLATFORM_UPDATE_ERROR } from '@shared/constant/ipc.constant';
+import Logger = require('electron-log');
+import { IPlatformCheckForUpdate } from '@shared/types/platformUpdate';
 
 // State
+let mainWindow: BrowserWindow | null = null;
+const updateJsonDir = join(app.getPath('userData'), 'updates.json');
 const rendererDir = join(app.getPath('userData'), 'renderer');
 const backupDir = join(app.getPath('userData'), 'renderer-backup');
 const corruptMarker = join(app.getPath('userData'), '.renderer-corrupt');
-let mainWindow: BrowserWindow | null = null;
-const tempZipPath = join(app.getPath('temp'), `renderer-update-${Date.now()}.zip`);
+const tempZipPath = join(app.getPath('temp'), `renderer-update-application.zip`);
 
-//
 export function initPlatformUpadateService(win: BrowserWindow | null) {
   mainWindow = win;
 }
@@ -24,21 +26,18 @@ export async function copyRendererToUserData() {
     // Ensure destination parent exists
     await fs.ensureDir(dirname(dest));
 
-    // Remove old renderer (optional but recommended)
-    if (await fs.pathExists(dest)) {
-      await fs.remove(dest);
+    if (!(await fs.pathExists(dest))) {
+      // Copy renderer
+      await fs.copy(src, dest, {
+        overwrite: true,
+        errorOnExist: false,
+      });
     }
 
-    // Copy renderer
-    await fs.copy(src, dest, {
-      overwrite: true,
-      errorOnExist: false,
-    });
-
-    console.log('Renderer copied to userData');
+    Logger.log('Renderer copied to userData');
     return { success: true };
   } catch (err: any) {
-    console.error('Failed to copy renderer:', err);
+    Logger.error('Failed to copy renderer:', err);
     return { success: false, error: err.message };
   }
 }
@@ -49,38 +48,36 @@ export async function retorePlatformUpdateBackup() {
     if (fs.existsSync(backupDir)) {
       await fs.remove(rendererDir);
       await fs.copy(backupDir, rendererDir);
-      console.log('Successfully rolled back renderer folder');
+      Logger.log('Successfully rolled back renderer folder');
     }
   } catch (err) {
-    console.error('Rollback failed:', err);
+    Logger.error('Rollback failed:', err);
   }
 }
 
 // Auto rollback on startup if previous update failed
 export async function checkForCorruptionAndRollback() {
-  if (fs.existsSync(corruptMarker)) {
-    console.log('Detected failed update. Restoring backup...');
-    retorePlatformUpdateBackup();
-    fs.removeSync(corruptMarker);
+  try {
+    if (fs.existsSync(corruptMarker)) {
+      Logger.log('Detected failed update. Restoring backup...');
+      await retorePlatformUpdateBackup();
+      fs.removeSync(corruptMarker);
 
-    dialog.showMessageBox({
-      type: 'warning',
-      title: 'Update Recovery',
-      message: 'The previous update failed.\nThe application has been restored to the last working version.',
-    });
-  }
+      dialog.showMessageBox({
+        type: 'warning',
+        title: 'Update Recovery',
+        message: 'The previous update failed.\nThe application has been restored to the last working version.',
+      });
+    }
+  } catch {}
 }
 
 export async function platformHandleBackup(buffer: ArrayBuffer) {
   try {
-    //   sendStatus('Downloading new version...');
-    console.log('Downloading new version...');
-
     // 1. Download using native fetch
     fs.writeFileSync(tempZipPath, Buffer.from(buffer));
 
-    // sendStatus('Backing up current version...');
-    console.log('Backing up current version...');
+    Logger.log('Backing up current version...');
 
     // 2. Backup
     if (fs.existsSync(rendererDir)) {
@@ -89,7 +86,7 @@ export async function platformHandleBackup(buffer: ArrayBuffer) {
 
     return { success: true };
   } catch (error: any) {
-    console.error('Update failed:', error);
+    Logger.error('Update failed:', error);
 
     await retorePlatformUpdateBackup();
     if (fs.existsSync(tempZipPath)) fs.removeSync(tempZipPath);
@@ -108,15 +105,6 @@ export async function platformUpdate() {
     // Mark as updating
     fs.writeFileSync(corruptMarker, 'update-in-progress');
 
-    // sendStatus('Closing window to release file locks...');
-    console.log('Closing window to release file locks...');
-
-    // Close main window to release file handles
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // sendStatus('Extracting new files...');
-    console.log('Extracting new files...');
-
     // 4. Replace renderer folder
     await fs.remove(rendererDir);
     await extract(tempZipPath, { dir: rendererDir });
@@ -127,23 +115,29 @@ export async function platformUpdate() {
     if (fs.existsSync(corruptMarker)) fs.removeSync(corruptMarker);
 
     // sendStatus('Update successful! Restarting application...');
-    console.log('Update successful! Restarting application...');
-
-    // Recreate window
-    // recreateMainWindow();
+    Logger.log('Update successful! Restarting application...');
 
     return { success: true };
   } catch (error: any) {
-    console.error('Update failed:', error);
+    Logger.error('Update failed:', error);
 
     await retorePlatformUpdateBackup();
     if (fs.existsSync(tempZipPath)) fs.removeSync(tempZipPath);
     if (fs.existsSync(corruptMarker)) fs.removeSync(corruptMarker);
 
-    // sendStatus('Update failed. Rolled back to previous version.');
     mainWindow?.webContents?.send(IPC_PLATFORM_UPDATE_ERROR, 'Update failed. Rolled back to previous version.');
-    // recreateMainWindow();
 
     return { success: false, error: error.message };
+  }
+}
+
+export async function checkPlatformAvailableForUpdate(): Promise<IPlatformCheckForUpdate | null> {
+  try {
+    const exist = await fs.pathExists(updateJsonDir);
+    if (exist) return (await fs.readJSONSync(updateJsonDir)) as IPlatformCheckForUpdate;
+    else return null;
+  } catch (e: any) {
+    Logger.error('Checking platform availble version failed:', e?.message);
+    return null;
   }
 }

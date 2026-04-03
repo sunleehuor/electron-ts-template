@@ -91,7 +91,7 @@ contextBridge.exposeInMainWorld('electronUpdater', {
 contextBridge.exposeInMainWorld('electronPlatformUpdater', {
   checkForUpdate: (url: string) => ipcRenderer.invoke(IPC_PLATFORM_CHECK_FOR_UPDATE, url),
   confirmDownload: (url: string) => ipcRenderer.send(IPC_PLATFORM_CONFIRM_DOWNLOAD, url),
-  quitAndInstall: () => ipcRenderer.send(IPC_PLATFORM_CONFIRM_UPDATE),
+  quitAndInstall: () => ipcRenderer.invoke(IPC_PLATFORM_CONFIRM_UPDATE),
 
   onProgress: (callback: (data: IPlatformUpdateProgress) => void) =>
     ipcRenderer.on(IPC_PLATFORM_UPDATE_ON_PROGRESS, (_event, data) => callback(data)),

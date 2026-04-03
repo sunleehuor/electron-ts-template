@@ -11,7 +11,12 @@ export default function HomePage() {
   }
 
   async function quiteAndInstall() {
-    const res = await window.electronPlatformUpdater.quitAndInstall();
+    try {
+      const res = await window.electronPlatformUpdater.quitAndInstall();
+      console.log(res);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   return (

@@ -1,10 +1,9 @@
 import { IS_DEV, MAX_INSTANCES } from '@/constant/app.constant';
-import { wait } from '@/utils/utils';
 import { app, BrowserWindow, dialog, safeStorage } from 'electron';
 import log from 'electron-log';
 import path from 'path';
+import { checkForCorruptionAndRollback, copyRendererToUserData } from './platformUpdate.service';
 import { acquireSlot } from './slot.service';
-import { copyRendererToUserData } from './platformUpdate.service';
 
 // mark app start time
 const startTime = Date.now();
@@ -78,6 +77,7 @@ export function createSplashWindow(): BrowserWindow {
 }
 
 export async function doAfterSplashScreen() {
+  await checkForCorruptionAndRollback();
   await copyRendererToUserData();
 }
 
