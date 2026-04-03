@@ -1,5 +1,5 @@
 export interface IPlatformCheckForUpdate {
-  version: number;
+  version: string;
   name: string;
 }
 

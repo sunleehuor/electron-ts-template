@@ -1,4 +1,10 @@
-import { platformHandleBackup, platformUpdate } from '@/services/platformUpdate.service';
+import {
+  checkPlatformAvailableForUpdate,
+  platformHandleBackup,
+  platformUpdate,
+  platformUpdateJson,
+} from '@/services/platformUpdate.service';
+import { compareVersion } from '@/utils/utils';
 import {
   IPC_PLATFORM_CHECK_FOR_UPDATE,
   IPC_PLATFORM_CONFIRM_DOWNLOAD,
@@ -17,18 +23,32 @@ export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
   }
 
   // Check platform update available
-  ipcMain.handle(IPC_PLATFORM_CHECK_FOR_UPDATE, async (_, url: string): Promise<IPlatformCheckForUpdate | null> => {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch update info');
-      Logger.log('Platform check update available');
-      return await response.json();
-    } catch (error: any) {
-      Logger.error('Check update failed:', error?.message);
-      mainWindow?.webContents.send(IPC_PLATFORM_UPDATE_ERROR, error?.message);
-      return null;
+  ipcMain.handle(
+    IPC_PLATFORM_CHECK_FOR_UPDATE,
+    async (_, url: string): Promise<Partial<IPlatformCheckForUpdate> | null> => {
+      try {
+        const updateJson = await checkPlatformAvailableForUpdate();
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch update info');
+        const responseJson = await response.json();
+        Logger.log('Platform check update available', updateJson, responseJson);
+        if (updateJson) {
+          // Compare version is current version not latest
+          if (compareVersion(updateJson.version, responseJson.version) < 0) {
+            await platformUpdateJson(responseJson);
+            return responseJson;
+          }
+          return null;
+        }
+        await platformUpdateJson(responseJson);
+        return responseJson;
+      } catch (error: any) {
+        Logger.error('Check update failed:', error?.message);
+        mainWindow?.webContents.send(IPC_PLATFORM_UPDATE_ERROR, error?.message);
+        return null;
+      }
     }
-  });
+  );
 
   // Confirm to update and download source platform
   ipcMain.on(IPC_PLATFORM_CONFIRM_DOWNLOAD, async (_, url: string) => {

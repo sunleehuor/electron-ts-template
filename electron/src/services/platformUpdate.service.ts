@@ -141,3 +141,12 @@ export async function checkPlatformAvailableForUpdate(): Promise<IPlatformCheckF
     return null;
   }
 }
+
+export async function platformUpdateJson(payload: Partial<IPlatformCheckForUpdate>) {
+  try {
+    fs.writeJSONSync(updateJsonDir, payload);
+    Logger.log('Update json file successfully');
+  } catch (e: any) {
+    Logger.error('Update json file error: ', e?.message);
+  }
+}

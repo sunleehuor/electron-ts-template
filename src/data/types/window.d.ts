@@ -47,7 +47,7 @@ export interface ISlot {
 }
 
 export interface IElectronPlatformUpdater {
-  checkForUpdate: (url: string) => Promise<IPlatformCheckForUpdate | null>;
+  checkForUpdate: (url: string) => Promise<Partial<IPlatformCheckForUpdate> | null>;
   confirmDownload: (url: string) => Promise<vois>;
   quitAndInstall: () => Promise<void>;
 
