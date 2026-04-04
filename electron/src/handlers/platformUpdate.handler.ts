@@ -1,3 +1,4 @@
+import { IS_DEV } from '@/constant/app.constant';
 import {
   checkPlatformAvailableForUpdate,
   platformHandleBackup,
@@ -35,6 +36,7 @@ export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
     IPC_PLATFORM_CHECK_FOR_UPDATE,
     async (_, url: string): Promise<Partial<IPlatformCheckForUpdate> | null> => {
       try {
+        if (IS_DEV) return null;
         const updateJson = await checkPlatformAvailableForUpdate();
 
         const response = await retryWithBackoff(async () => {
