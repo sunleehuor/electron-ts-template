@@ -10,15 +10,20 @@ import {
 import { initService } from '@/services/service';
 import { app, BrowserWindow } from 'electron';
 import log from 'electron-log';
-import { clearSlotCacheIfLarge, releaseSlot } from './services/slot.service';
+import { clearSlotCacheIfLarge, releaseSlot } from '@/services/slot.service';
 
 let mainWindow: BrowserWindow | null = null;
 
-// clean stale lock before anything
+// Clean stale lock before anything
 cleanStaleLock();
 
+function quitApp() {
+  releaseLock();
+  app.quit();
+}
+
 async function bootstrap() {
-  // Splash screen
+  // Create splash screen
   const splash = createSplashWindow();
 
   await doAfterSplashScreen();
@@ -28,16 +33,14 @@ async function bootstrap() {
   // Check and clear cache size
   await clearSlotCacheIfLarge(slotId);
 
-  // Create main screen window
+  // Create main window
   mainWindow = createWindow(slotId);
 
-  // Listen creating window event
+  // Listen for creating window event
   onCreateWindow(mainWindow, splash);
 
-  // Init service
-  initService(mainWindow!);
-
-  // Init handler
+  // Initialize services and handlers
+  initService(mainWindow);
   initHandler(mainWindow, slotId);
 
   mainWindow.on('close', () => releaseSlot(slotId));
@@ -55,23 +58,16 @@ app.on('before-quit', releaseLock);
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
 process.on('uncaughtException', (err) => {
   log.error('[Process] Uncaught exception:', err);
-  releaseLock();
-  app.quit();
+  quitApp();
 });
 
 process.on('unhandledRejection', (err) => {
   log.error('[Process] Unhandled rejection:', err);
-  releaseLock();
-  app.quit();
+  quitApp();
 });
 
-process.on('SIGTERM', () => {
-  releaseLock();
-  app.quit();
-});
-process.on('SIGINT', () => {
-  releaseLock();
-  app.quit();
-});
+process.on('SIGTERM', quitApp);
+process.on('SIGINT', quitApp);

@@ -15,14 +15,22 @@ import {
 } from '@shared/constant/ipc.constant';
 import { IPlatformCheckForUpdate, IPlatformUpdateProgress } from '@shared/types/platformUpdate';
 import { BrowserWindow, ipcMain } from 'electron';
-import Logger from 'electron-log';
+import log from 'electron-log';
 
+/**
+ * Initializes the platform update IPC handlers.
+ * @param mainWindow - The main BrowserWindow instance
+ */
 export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
+  /**
+   * Sends platform update progress events to the renderer process.
+   * @param payload - The progress update payload
+   */
   function platformUpdateProgressEvent(payload: IPlatformUpdateProgress) {
     mainWindow?.webContents?.send(IPC_PLATFORM_UPDATE_ON_PROGRESS, payload);
   }
 
-  // Check platform update available
+  // Handle checking for platform updates
   ipcMain.handle(
     IPC_PLATFORM_CHECK_FOR_UPDATE,
     async (_, url: string): Promise<Partial<IPlatformCheckForUpdate> | null> => {
@@ -31,7 +39,7 @@ export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch update info');
         const responseJson = await response.json();
-        Logger.log('Platform check update available', updateJson, responseJson);
+        log.log('Platform check update available', updateJson, responseJson);
         if (updateJson) {
           // Compare version is current version not latest
           if (compareVersion(updateJson.version, responseJson.version) < 0) {
@@ -43,14 +51,14 @@ export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
         await platformUpdateJson(responseJson);
         return responseJson;
       } catch (error: any) {
-        Logger.error('Check update failed:', error?.message);
+        log.error('Check update failed:', error?.message);
         mainWindow?.webContents.send(IPC_PLATFORM_UPDATE_ERROR, error?.message);
         return null;
       }
     }
   );
 
-  // Confirm to update and download source platform
+  // Handle confirming download and downloading update source
   ipcMain.on(IPC_PLATFORM_CONFIRM_DOWNLOAD, async (_, url: string) => {
     try {
       // 1. Download using native fetch
@@ -67,23 +75,23 @@ export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
         status: 'Downloaded',
       });
       mainWindow?.webContents?.send(IPC_PLATFORM_SOURCE_DOWNLOAD);
-      Logger.log('Confirm download ok');
+      log.log('Confirm download ok');
     } catch (error: any) {
       platformUpdateProgressEvent({
         percent: 0,
         status: 'Failed',
       });
-      Logger.error('Confirm download failed:', error?.message);
+      log.error('Confirm download failed:', error?.message);
       mainWindow?.webContents.send(IPC_PLATFORM_UPDATE_ERROR, error?.message);
     }
   });
 
-  // Accept and update
+  // Handle accepting and applying the update
   ipcMain.handle(IPC_PLATFORM_CONFIRM_UPDATE, async (_) => {
     try {
       return await platformUpdate();
     } catch (error: any) {
-      Logger.error('Confirm update failed:', error?.message);
+      log.error('Confirm update failed:', error?.message);
       mainWindow?.webContents.send(IPC_PLATFORM_UPDATE_ERROR, error?.message);
       throw error;
     }
