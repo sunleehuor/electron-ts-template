@@ -4,6 +4,7 @@ import log from 'electron-log';
 import path from 'path';
 import { checkForCorruptionAndRollback, copyRendererToUserData } from './platformUpdate.service';
 import { acquireSlot } from './slot.service';
+import { wait } from '@/utils/utils';
 
 // mark app start time
 const startTime = Date.now();
@@ -79,6 +80,7 @@ export function createSplashWindow(): BrowserWindow {
 export async function doAfterSplashScreen() {
   await checkForCorruptionAndRollback();
   await copyRendererToUserData();
+  await wait(300);
 }
 
 export async function getSlotId(): Promise<number | undefined> {
@@ -111,4 +113,19 @@ export async function getSlotId(): Promise<number | undefined> {
   }
 
   return slotId;
+}
+
+export function createUpdateWindow(): BrowserWindow {
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  console.log('load update screen');
+  mainWindow.loadFile(path.join(__dirname, 'screens', 'update-screen.html'));
+  return mainWindow;
 }
