@@ -43,7 +43,7 @@ export async function copyRendererToUserData() {
 }
 
 // Restore backup if previous update failed
-export async function retorePlatformUpdateBackup() {
+export async function restorePlatformUpdateBackup() {
   try {
     if (fs.existsSync(backupDir)) {
       await fs.remove(rendererDir);
@@ -60,7 +60,7 @@ export async function checkForCorruptionAndRollback() {
   try {
     if (fs.existsSync(corruptMarker)) {
       Logger.log('Detected failed update. Restoring backup...');
-      await retorePlatformUpdateBackup();
+      await restorePlatformUpdateBackup();
       fs.removeSync(corruptMarker);
 
       dialog.showMessageBox({
@@ -88,7 +88,7 @@ export async function platformHandleBackup(buffer: ArrayBuffer) {
   } catch (error: any) {
     Logger.error('Update failed:', error);
 
-    await retorePlatformUpdateBackup();
+    await restorePlatformUpdateBackup();
     if (fs.existsSync(tempZipPath)) fs.removeSync(tempZipPath);
     if (fs.existsSync(corruptMarker)) fs.removeSync(corruptMarker);
 
@@ -121,7 +121,7 @@ export async function platformUpdate() {
   } catch (error: any) {
     Logger.error('Update failed:', error);
 
-    await retorePlatformUpdateBackup();
+    await restorePlatformUpdateBackup();
     if (fs.existsSync(tempZipPath)) fs.removeSync(tempZipPath);
     if (fs.existsSync(corruptMarker)) fs.removeSync(corruptMarker);
 
