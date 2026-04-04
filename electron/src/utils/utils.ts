@@ -1,3 +1,5 @@
+import log from 'electron-log';
+
 export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -30,4 +32,28 @@ export function compareVersion(v1: string, v2: string) {
   } catch {
     return 0;
   }
+}
+
+/**
+ * Retries a function up to the specified number of times with exponential backoff.
+ * @param fn - The async function to retry
+ * @param maxRetries - Maximum number of retry attempts (default: 5)
+ * @returns Promise resolving to the function result
+ */
+export async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries: number = 5): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        log.warn(`Attempt ${attempt} failed, retrying...`, error.message);
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+      }
+    }
+  }
+
+  throw lastError || new Error('All retry attempts failed');
 }

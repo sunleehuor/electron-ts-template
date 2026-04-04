@@ -4,7 +4,7 @@ import {
   platformUpdate,
   platformUpdateJson,
 } from '@/services/platformUpdate.service';
-import { compareVersion } from '@/utils/utils';
+import { compareVersion, retryWithBackoff } from '@/utils/utils';
 import {
   IPC_PLATFORM_CHECK_FOR_UPDATE,
   IPC_PLATFORM_CONFIRM_DOWNLOAD,
@@ -36,8 +36,15 @@ export function initPlatformUpdateHandler(mainWindow: BrowserWindow | null) {
     async (_, url: string): Promise<Partial<IPlatformCheckForUpdate> | null> => {
       try {
         const updateJson = await checkPlatformAvailableForUpdate();
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch update info');
+
+        const response = await retryWithBackoff(async () => {
+          const fetchResponse = await fetch(url);
+          if (!fetchResponse.ok) {
+            throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
+          }
+          return fetchResponse;
+        });
+
         const responseJson = await response.json();
         log.log('Platform check update available', updateJson, responseJson);
         if (updateJson) {

@@ -1,8 +1,8 @@
 import { BrowserWindow } from 'electron';
 import { initBadgeService } from '@/services/badge.service';
-import { initPlatformUpadateService } from './platformUpdate.service';
+import { initPlatformUpdateService } from '@/services/platformUpdate.service';
 
 export function initService(win: BrowserWindow | null) {
   initBadgeService(win);
-  initPlatformUpadateService(win);
+  initPlatformUpdateService(win);
 }
