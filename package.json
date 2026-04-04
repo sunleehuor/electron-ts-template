@@ -28,7 +28,8 @@
     "window-package": "electron-builder --win",
     "mac-package": "electron-builder --mac",
     "linux-package": "electron-builder --linux",
-    "check:native": "node scripts/check-native.mjs"
+    "check:native": "node scripts/checkNative.mjs",
+    "platform:build": "bash ./scripts/platformBuild.sh"
   },
   "build": {
     "appId": "react.electron",
